@@ -1,0 +1,513 @@
+.app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px;
+  color: #e6ecff;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #111933;
+  border: 1px solid #233362;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.menu {
+  display: flex;
+  gap: 8px;
+}
+
+.menu button {
+  border: 1px solid #41538b;
+  background: #1a2550;
+  color: #d7e3ff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.menu button.active {
+  background: #5f7cff;
+  color: #0f1430;
+  border-color: #96abff;
+}
+
+.userbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #bdc9ef;
+}
+
+.logout-btn {
+  border: 1px solid #4f62a0;
+  background: #192553;
+  color: #d7e3ff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #253472;
+}
+
+.page {
+  background: #0f1731;
+  border: 1px solid #22335e;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.page h2 {
+  margin: 0 0 12px;
+  font-size: 28px;
+}
+
+.page h3 {
+  margin: 16px 0 8px;
+  font-size: 18px;
+  color: #c6d5ff;
+}
+
+.muted {
+  color: #9fb0de;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.employee-form {
+  margin-bottom: 16px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.clients-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.btn-green {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #22c55e;
+  color: #082114;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.filters input,
+.filters select,
+.filters button {
+  border-radius: 8px;
+  border: 1px solid #3b4f87;
+  background: #121d3e;
+  color: #e7eeff;
+  padding: 8px 10px;
+}
+
+.filters button {
+  background: #b684ff;
+  color: #1a1330;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  border: 1px solid #2c3f70;
+  padding: 8px;
+}
+
+.table th {
+  background: #17224a;
+  text-align: left;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: rgba(120, 158, 255, 0.15);
+}
+
+.clients-table td button,
+.table td button {
+  border: 1px solid #5367a8;
+  background: #1f2e61;
+  color: #dce5ff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.account-actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.account-actions input {
+  width: 140px;
+  border-radius: 6px;
+  border: 1px solid #3b4f87;
+  background: #121d3e;
+  color: #e7eeff;
+  padding: 4px 8px;
+}
+
+.clients-table td button:disabled,
+.table td button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.wide-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.wide-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wide-form input,
+.wide-form select,
+.wide-form button {
+  border-radius: 8px;
+  border: 1px solid #3b4f87;
+  background: #121d3e;
+  color: #e7eeff;
+  padding: 8px 10px;
+}
+
+.wide-form button {
+  grid-column: 1 / -1;
+  background: #b684ff;
+  color: #1a1330;
+  border: none;
+  font-weight: 700;
+}
+
+.profile-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: #121d3e;
+  border: 1px solid #2c3f70;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tab {
+  border: 1px solid #3f579b;
+  background: #16224a;
+  color: #dce6ff;
+  border-radius: 8px;
+  padding: 7px 11px;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #6b7cff;
+  color: #13173a;
+}
+
+.credit-calculator {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 10px;
+  align-items: start;
+}
+
+.calculator-card {
+  border: 1px solid #2e4478;
+  background: linear-gradient(180deg, rgba(22, 34, 74, 0.85), rgba(15, 24, 51, 0.85));
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.calculator-head {
+  margin-bottom: 10px;
+}
+
+.calculator-head h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.calculator-head p {
+  margin: 0;
+  color: #9fb0de;
+  font-size: 13px;
+}
+
+.credit-calculator label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #d3defd;
+  letter-spacing: 0.02em;
+}
+
+.credit-calculator input,
+.credit-calculator select {
+  border-radius: 8px;
+  border: 1px solid #3b4f87;
+  background: #121d3e;
+  color: #e7eeff;
+  padding: 10px 12px;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.credit-calculator input[readonly] {
+  opacity: 0.85;
+  border-style: dashed;
+}
+
+.credit-calculator small {
+  color: #9fb0de;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.calc-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  align-self: end;
+}
+
+.calc-actions button {
+  border-radius: 8px;
+  border: none;
+  padding: 10px 14px;
+  background: #b684ff;
+  color: #1a1330;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hint {
+  margin: 8px 0;
+  color: #9ee6b9;
+  font-weight: 600;
+}
+
+.calculator-note {
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #34508f;
+  background: rgba(38, 58, 112, 0.25);
+  color: #c6d5ff;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.mortgage-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 6px 0 8px;
+}
+
+.mortgage-metrics div {
+  background: #101d43;
+  border: 1px solid #355297;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #cfe0ff;
+  font-size: 13px;
+}
+
+.credits-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 6px 0 10px;
+}
+
+.credits-toolbar button {
+  border-radius: 8px;
+  border: 1px solid #3b4f87;
+  background: #16224a;
+  color: #dce6ff;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.schedule-box {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #2c3f70;
+  border-radius: 8px;
+  background: #101a37;
+}
+
+.error {
+  background: rgba(255, 80, 80, 0.2);
+  border: 1px solid rgba(255, 80, 80, 0.6);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+.toast {
+  background: rgba(56, 189, 98, 0.2);
+  border: 1px solid rgba(56, 189, 98, 0.7);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: min(460px, 100%);
+  background: linear-gradient(180deg, #13214b 0%, #0f1b3f 100%);
+  border: 1px solid #2f4e93;
+  border-radius: 16px;
+  padding: 22px 20px 18px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+}
+
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.auth-heading {
+  margin: 0;
+  color: #ecf1ff;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.auth-subtitle {
+  margin-top: 4px;
+  color: #9eb1e8;
+  font-size: 13px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  color: #a9bae9;
+  font-size: 14px;
+}
+
+.auth-input {
+  height: 48px;
+  border-radius: 10px;
+  border: 1px solid #3d5ea8;
+  background: #101d43;
+  color: #edf2ff;
+  padding: 0 14px;
+  font-size: 16px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.auth-input:focus {
+  border-color: #6ea0ff;
+  box-shadow: 0 0 0 3px rgba(102, 153, 255, 0.22);
+}
+
+.auth-button {
+  margin-top: 6px;
+  height: 50px;
+  border-radius: 11px;
+  border: none;
+  background: #b684ff;
+  color: #1a1330;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-button:hover {
+  filter: brightness(1.05);
+}
+
+@media (max-width: 1200px) {
+  .calc-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .credit-calculator {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-card {
+    padding: 18px 14px 14px;
+  }
+
+  .auth-heading {
+    font-size: 22px;
+  }
+}

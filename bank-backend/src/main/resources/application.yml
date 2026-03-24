@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bankdb
+    username: bank_user
+    password: bank_password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+app:
+  security:
+    # 32+ chars secret key for HMAC
+    jwt-secret: "very-long-demo-secret-key-change-me-123456"
+
+
