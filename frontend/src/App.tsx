@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 type ClientType = 'INDIVIDUAL' | 'COMPANY'
@@ -102,6 +102,8 @@ function App() {
   const [profileDisplayName, setProfileDisplayName] = useState('')
   const [passwordForm, setPasswordForm] = useState({ current: '', next: '', next2: '' })
 
+  const creditsListRef = useRef<HTMLDivElement>(null)
+
   const [employees, setEmployees] = useState<Employee[]>([])
   const [newEmployee, setNewEmployee] = useState({
     username: '',
@@ -142,9 +144,15 @@ function App() {
 
   const parseError = async (res: Response) => {
     const body = await res.json().catch(() => ({}))
-    if (body?.error) return body.error as string
-    if (typeof body === 'object') {
+    const ve = body?.validationErrors
+    if (ve && typeof ve === 'object') {
+      const parts = Object.values(ve as Record<string, string>).filter(Boolean)
+      if (parts.length > 0) return parts.join(' ')
+    }
+    if (body?.error) return String(body.error)
+    if (typeof body === 'object' && body !== null) {
       return Object.entries(body)
+        .filter(([k]) => !['timestamp', 'status', 'path', 'validationErrors'].includes(k))
         .map(([k, v]) => `${k}: ${String(v)}`)
         .join(' | ')
     }
@@ -182,6 +190,12 @@ function App() {
   useEffect(() => {
     if (token) loadMe()
   }, [token])
+
+  useEffect(() => {
+    if (!error) return
+    const t = window.setTimeout(() => setError(null), 8000)
+    return () => window.clearTimeout(t)
+  }, [error])
 
   const loadEmployees = async () => {
     const res = await fetch(`${API}/employees`, { headers: withAuth() })
@@ -323,6 +337,30 @@ function App() {
 
   const createClient = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+    if (newClient.type === 'INDIVIDUAL') {
+      const fn = (newClient.firstName ?? '').trim()
+      const ln = (newClient.lastName ?? '').trim()
+      const egn = (newClient.egn ?? '').trim()
+      if (fn.length <= 3) {
+        setError('Името трябва да е поне 4 символа (повече от 3).')
+        return
+      }
+      if (ln.length <= 3) {
+        setError('Фамилията трябва да е поне 4 символа (повече от 3).')
+        return
+      }
+      if (!/^\d{10}$/.test(egn)) {
+        setError('ЕГН трябва да съдържа точно 10 цифри.')
+        return
+      }
+    } else {
+      const eik = (newClient.eik ?? '').trim()
+      if (!/^\d{10}$/.test(eik)) {
+        setError('ЕИК трябва да съдържа точно 10 цифри.')
+        return
+      }
+    }
     const res = await fetch(`${API}/clients`, {
       method: 'POST',
       headers: withAuth({ 'Content-Type': 'application/json' }),
@@ -463,8 +501,13 @@ function App() {
     setOpenedCreditId(id)
     showToast(`Кредит #${id} е отпуснат`)
     openCredit(id)
-    loadCredits(selectedClient.id)
-    loadAccounts(selectedClient.id)
+    await loadCredits(selectedClient.id)
+    await loadAccounts(selectedClient.id)
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        creditsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    })
   }
 
   const openCredit = async (creditId: number) => {
@@ -579,8 +622,8 @@ function App() {
               {clients.map((c) => (
                 <tr key={c.id} className="clickable-row" onClick={() => openClient(c)}>
                   <td>{c.type === 'INDIVIDUAL' ? 'ФЛ' : 'ЮЛ'}</td>
-                  <td>{c.firstName ?? '-'}</td>
-                  <td>{c.lastName ?? c.companyName}</td>
+                  <td>{c.type === 'INDIVIDUAL' ? (c.firstName ?? '—') : (c.representativeName ?? '—')}</td>
+                  <td>{c.type === 'INDIVIDUAL' ? (c.lastName ?? '—') : (c.companyName ?? '—')}</td>
                   <td>{c.egn ?? c.eik}</td>
                   <td>{c.createdByDisplayName ?? c.createdByUsername ?? '—'}</td>
                 </tr>
@@ -593,8 +636,8 @@ function App() {
       {menu === 'new-client' && (
         <section className="page">
           <h2>Добавяне на клиент</h2>
-          <form className="form wide-form" onSubmit={createClient}>
-            <label>Тип
+          <form className="form wide-form new-client-form" onSubmit={createClient}>
+            <label className="new-client-row-full">Тип
               <select value={newClient.type} onChange={(e) => setNewClient({ ...newClient, type: e.target.value as ClientType })}>
                 <option value="INDIVIDUAL">Физическо лице</option>
                 <option value="COMPANY">Юридическо лице</option>
@@ -604,13 +647,13 @@ function App() {
               <>
                 <label>Име<input required value={newClient.firstName ?? ''} onChange={(e) => setNewClient({ ...newClient, firstName: e.target.value })} /></label>
                 <label>Фамилия<input required value={newClient.lastName ?? ''} onChange={(e) => setNewClient({ ...newClient, lastName: e.target.value })} /></label>
-                <label>ЕГН<input required value={newClient.egn ?? ''} onChange={(e) => setNewClient({ ...newClient, egn: e.target.value })} /></label>
+                <label className="new-client-row-full">ЕГН (10 цифри)<input required inputMode="numeric" maxLength={10} autoComplete="off" value={newClient.egn ?? ''} onChange={(e) => setNewClient({ ...newClient, egn: e.target.value.replace(/\D/g, '').slice(0, 10) })} /></label>
               </>
             ) : (
               <>
                 <label>Фирма<input required value={newClient.companyName ?? ''} onChange={(e) => setNewClient({ ...newClient, companyName: e.target.value })} /></label>
-                <label>ЕИК<input required value={newClient.eik ?? ''} onChange={(e) => setNewClient({ ...newClient, eik: e.target.value })} /></label>
-                <label>Представител<input required value={newClient.representativeName ?? ''} onChange={(e) => setNewClient({ ...newClient, representativeName: e.target.value })} /></label>
+                <label>ЕИК (10 цифри)<input required inputMode="numeric" maxLength={10} autoComplete="off" value={newClient.eik ?? ''} onChange={(e) => setNewClient({ ...newClient, eik: e.target.value.replace(/\D/g, '').slice(0, 10) })} /></label>
+                <label className="new-client-row-full">Представител<input required value={newClient.representativeName ?? ''} onChange={(e) => setNewClient({ ...newClient, representativeName: e.target.value })} /></label>
               </>
             )}
             <button type="submit">Запази клиент</button>
@@ -652,19 +695,21 @@ function App() {
 
       {menu === 'my-account' && (
         <section className="page">
-          <h2>Моят профил</h2>
-          <form className="form wide-form" onSubmit={saveMyProfile}>
-            <label>Потребителско име<input readOnly value={myProfile?.username ?? username} /></label>
-            <label>Име за показване<input value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} placeholder="Как да те виждат колегите" /></label>
-            <button type="submit">Запази профил</button>
-          </form>
-          <h3>Смяна на парола</h3>
-          <form className="form wide-form" onSubmit={changePassword}>
-            <label>Текуща парола<input type="password" required value={passwordForm.current} onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })} /></label>
-            <label>Нова парола<input type="password" required value={passwordForm.next} onChange={(e) => setPasswordForm({ ...passwordForm, next: e.target.value })} /></label>
-            <label>Повтори новата парола<input type="password" required value={passwordForm.next2} onChange={(e) => setPasswordForm({ ...passwordForm, next2: e.target.value })} /></label>
-            <button type="submit">Смени парола</button>
-          </form>
+          <div className="my-account-stack">
+            <h2>Моят профил</h2>
+            <form className="form wide-form my-account-form" onSubmit={saveMyProfile}>
+              <label>Потребителско име<input readOnly value={myProfile?.username ?? username} /></label>
+              <label>Име за показване<input value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} placeholder="Как да те виждат колегите" /></label>
+              <button type="submit">Запази профил</button>
+            </form>
+            <h3>Смяна на парола</h3>
+            <form className="form wide-form my-account-form password-change-form" onSubmit={changePassword}>
+              <label>Текуща парола<input type="password" required value={passwordForm.current} onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })} /></label>
+              <label>Нова парола<input type="password" required value={passwordForm.next} onChange={(e) => setPasswordForm({ ...passwordForm, next: e.target.value })} /></label>
+              <label>Повтори новата парола<input type="password" required value={passwordForm.next2} onChange={(e) => setPasswordForm({ ...passwordForm, next2: e.target.value })} /></label>
+              <button type="submit">Смени парола</button>
+            </form>
+          </div>
         </section>
       )}
 
@@ -676,9 +721,19 @@ function App() {
               <h2>Профил на клиент</h2>
               <div className="profile-card">
                 <div><strong>Тип:</strong> {selectedClient.type === 'INDIVIDUAL' ? 'Физическо лице' : 'Юридическо лице'}</div>
-                <div><strong>Име:</strong> {selectedClient.firstName ?? selectedClient.companyName}</div>
-                <div><strong>Фамилия/Представител:</strong> {selectedClient.lastName ?? selectedClient.representativeName}</div>
-                <div><strong>ЕГН/ЕИК:</strong> {selectedClient.egn ?? selectedClient.eik}</div>
+                {selectedClient.type === 'INDIVIDUAL' ? (
+                  <>
+                    <div><strong>Име:</strong> {selectedClient.firstName ?? '—'}</div>
+                    <div><strong>Фамилия:</strong> {selectedClient.lastName ?? '—'}</div>
+                    <div><strong>ЕГН:</strong> {selectedClient.egn ?? '—'}</div>
+                  </>
+                ) : (
+                  <>
+                    <div><strong>Фирма:</strong> {selectedClient.companyName ?? '—'}</div>
+                    <div><strong>Представител:</strong> {selectedClient.representativeName ?? '—'}</div>
+                    <div><strong>ЕИК:</strong> {selectedClient.eik ?? '—'}</div>
+                  </>
+                )}
                 {(selectedClient.createdByDisplayName || selectedClient.createdByUsername) && (
                   <div><strong>Регистрирал клиента:</strong> {selectedClient.createdByDisplayName ?? selectedClient.createdByUsername}</div>
                 )}
@@ -758,7 +813,7 @@ function App() {
                       </label>
 
                       <label>
-                        Нетен месечен доход (лв.)
+                        Нетен месечен доход (евро)
                         <input
                           type="number"
                           min={0}
@@ -783,7 +838,7 @@ function App() {
 
                       {creditForm.type === 'MORTGAGE' && (
                         <label>
-                          Стойност на имота (лв.)
+                          Стойност на имота (евро)
                           <input
                             type="number"
                             min={0}
@@ -796,7 +851,7 @@ function App() {
 
                       {creditForm.type === 'MORTGAGE' && (
                         <label>
-                          Самоучастие (лв.)
+                          Самоучастие (евро)
                           <input
                             type="number"
                             min={0}
@@ -809,7 +864,7 @@ function App() {
                       )}
 
                       <label>
-                        Искана сума (лв.)
+                        Искана сума (евро)
                         <input
                           type="number"
                           min={100}
@@ -847,32 +902,35 @@ function App() {
                         <button type="button" onClick={calculateSuggestion}>
                           Изчисли максимум
                         </button>
-                        <button type="submit" disabled={role !== 'ROLE_ADMIN'}>
-                          Отпусни кредит
-                        </button>
+                        <button type="submit">Отпусни кредит</button>
                       </div>
                     </form>
 
                     {creditForm.type === 'MORTGAGE' && (
                       <div className="mortgage-metrics">
                         <div>Самоучастие: <strong>{mortgageDownPaymentPercent.toFixed(2)}%</strong></div>
-                        <div>Ипотечна сума: <strong>{mortgageLoanAmount.toFixed(2)} лв.</strong></div>
+                        <div>Ипотечна сума: <strong>{mortgageLoanAmount.toFixed(2)} евро</strong></div>
                       </div>
                     )}
 
-                    {suggestedMax !== null && <div className="hint">Препоръчителен максимум: {suggestedMax.toFixed(2)} лв.</div>}
-                    <div className="calculator-note">
-                      <strong>Как се калкулира:</strong> Анюитетна вноска с динамична лихва според тип кредит и доход. За
-                      ипотечен кредит се взема предвид и самоучастието (мин. 20%), а максималната сума е ограничена както
-                      от дохода, така и от стойността на имота.
+                    {suggestedMax !== null && <div className="hint">Препоръчителен максимум: {suggestedMax.toFixed(2)} евро</div>}
+                    <details className="calculator-note-details">
+                      <summary>Как се калкулира (покажи)</summary>
+                      <div className="calculator-note-body">
+                        Анюитетна вноска с динамична лихва според тип кредит и доход. За ипотечен кредит се взема предвид и
+                        самоучастието (мин. 20%), а максималната сума е ограничена както от дохода, така и от стойността на
+                        имота.
+                      </div>
+                    </details>
+                  </div>
+
+                  <div className="credits-list-anchor" ref={creditsListRef}>
+                    <div className="credits-toolbar">
+                      <h3 className="credits-list-title">Отпуснати кредити</h3>
+                      <button type="button" onClick={refreshCredits}>Обнови</button>
                     </div>
-                  </div>
 
-                  <div className="credits-toolbar">
-                    <button type="button" onClick={refreshCredits}>Обнови</button>
-                  </div>
-
-                  <table className="table">
+                    <table className="table">
                     <thead><tr><th>ID</th><th>Тип</th><th>Сума</th><th>Лихва</th><th>Срок</th><th>Дата</th><th>Статус</th><th>Отпуснал</th><th></th></tr></thead>
                     <tbody>
                       {credits.map((c) => (
@@ -895,6 +953,7 @@ function App() {
                       )}
                     </tbody>
                   </table>
+                  </div>
 
                   {openedCreditId && (
                     <div className="schedule-box">

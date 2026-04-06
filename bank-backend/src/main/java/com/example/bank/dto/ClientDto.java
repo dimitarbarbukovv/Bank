@@ -22,14 +22,14 @@ public class ClientDto {
     @Size(max = 100, message = "Фамилията може да е до 100 символа")
     private String lastName;
 
-    @Size(max = 10, min = 10, message = "ЕГН трябва да е точно 10 цифри")
+    /** За ФЛ: точно 10 цифри (валидира се с анотацията върху ClientDto). */
     private String egn;
 
     // Company
     @Size(max = 255, message = "Името на фирмата може да е до 255 символа")
     private String companyName;
 
-    @Size(max = 13, min = 9, message = "ЕИК трябва да е между 9 и 13 символа")
+    /** За ЮЛ: точно 10 цифри — валидира се в ValidClientByType. */
     private String eik;
 
     @Size(max = 200, message = "Името на представителя може да е до 200 символа")

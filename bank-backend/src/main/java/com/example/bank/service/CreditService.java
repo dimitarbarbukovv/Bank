@@ -35,7 +35,7 @@ public class CreditService {
     private final CreditMapper creditMapper;
 
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE')")
     public Long createCredit(CreditRequestDto dto) {
         validateMortgageInputs(dto);
 

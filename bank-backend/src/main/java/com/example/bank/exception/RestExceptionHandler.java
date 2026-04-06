@@ -15,7 +15,9 @@ import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class RestExceptionHandler {
@@ -43,7 +45,10 @@ public class RestExceptionHandler {
                 validationErrors.put(objectError.getObjectName(), errorMessage);
             }
         });
-        return buildError(HttpStatus.BAD_REQUEST, "Невалидни входни данни", request, validationErrors);
+        String summary = new LinkedHashSet<>(validationErrors.values()).stream()
+                .collect(Collectors.joining(" "));
+        String message = summary.isBlank() ? "Невалидни входни данни" : summary;
+        return buildError(HttpStatus.BAD_REQUEST, message, request, validationErrors);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)

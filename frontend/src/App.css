@@ -1,8 +1,11 @@
 .app {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 16px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+  padding: 16px clamp(16px, 2.5vw, 32px);
   color: #e6ecff;
+  flex: 1;
 }
 
 .topbar {
@@ -89,8 +92,52 @@
   margin-bottom: 12px;
 }
 
-.employee-form {
+.employee-form,
+.new-client-form {
+  max-width: 30rem;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
   margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+/* Центрирана колона: заглавия + форми на една ширина */
+.my-account-stack {
+  max-width: 30rem;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.my-account-stack h2 {
+  margin: 0 0 12px;
+}
+
+.my-account-stack h3 {
+  margin: 20px 0 8px;
+}
+
+.my-account-form {
+  width: 100%;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+.my-account-stack .my-account-form:last-of-type {
+  margin-bottom: 0;
+}
+
+/* Добавяне на клиент: тип и ЕГН/представител на цял ред; име+фамилия (или фирма+ЕИК) на един ред */
+.new-client-form.wide-form label.new-client-row-full {
+  grid-column: 1 / -1;
+}
+
+/* Смяна на парола: три полета едно под друго */
+.password-change-form.wide-form {
+  grid-template-columns: 1fr;
 }
 
 .filters {
@@ -260,6 +307,11 @@
 }
 
 .calculator-card {
+  max-width: 40rem;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
   border: 1px solid #2e4478;
   background: linear-gradient(180deg, rgba(22, 34, 74, 0.85), rgba(15, 24, 51, 0.85));
   border-radius: 12px;
@@ -337,15 +389,42 @@
   font-weight: 600;
 }
 
-.calculator-note {
-  margin: 8px 0 12px;
-  padding: 10px 12px;
+.calculator-note-details {
+  margin: 10px 0 0;
   border-radius: 8px;
   border: 1px solid #34508f;
-  background: rgba(38, 58, 112, 0.25);
+  background: rgba(38, 58, 112, 0.2);
   color: #c6d5ff;
   font-size: 13px;
   line-height: 1.4;
+}
+
+.calculator-note-details > summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  font-weight: 600;
+  color: #d3defd;
+  list-style: none;
+}
+
+.calculator-note-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.calculator-note-body {
+  padding: 0 12px 12px;
+  color: #c6d5ff;
+}
+
+.credits-list-anchor {
+  scroll-margin-top: 12px;
+}
+
+.credits-list-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #c6d5ff;
 }
 
 .mortgage-metrics {
@@ -366,8 +445,11 @@
 
 .credits-toolbar {
   display: flex;
-  justify-content: flex-end;
-  margin: 6px 0 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 14px 0 10px;
 }
 
 .credits-toolbar button {
@@ -405,7 +487,10 @@
 }
 
 .auth-shell {
+  width: 100%;
+  box-sizing: border-box;
   min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -495,6 +580,14 @@
 @media (max-width: 1200px) {
   .calc-actions {
     grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 540px) {
+  .employee-form.wide-form,
+  .new-client-form.wide-form,
+  .my-account-form.wide-form {
+    grid-template-columns: 1fr;
   }
 }
 
