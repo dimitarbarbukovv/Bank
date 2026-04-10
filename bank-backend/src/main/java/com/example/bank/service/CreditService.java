@@ -55,6 +55,17 @@ public class CreditService {
             if (!account.getOwner().getId().equals(dto.getClientId())) {
                 throw new BusinessException("Избраната сметка не принадлежи на този клиент");
             }
+
+            boolean hasActive = account.getOwner().getCredits().stream()
+                    .anyMatch(c ->
+                        c.getDisbursementAccount() != null &&
+                        c.getDisbursementAccount().getId().equals(account.getId()) &&
+                        !"PAID".equals(getCreditStatus(c.getId()))
+                    );
+
+            if (hasActive) {
+            throw new BusinessException("Вече има активен кредит за тази сметка");
+            }
             credit.setDisbursementAccount(account);
         }
 
