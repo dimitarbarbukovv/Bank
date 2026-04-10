@@ -335,6 +335,12 @@ function App() {
     }
   }, [creditForm.type, creditForm.propertyValue, creditForm.downPayment])
 
+  useEffect(() => {
+  if (menu === 'profile' && profileTab === 'accounts' && selectedClient?.id) {
+    loadAccounts(selectedClient.id)
+  }
+  }, [menu, profileTab, selectedClient?.id])
+
   const createClient = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -543,17 +549,23 @@ function App() {
   }
 
   const markPaid = async (installmentId: number) => {
-    if (!openedCreditId) return
-    const res = await fetch(`${API}/credits/installments/${installmentId}/pay`, {
-      method: 'POST',
-      headers: withAuth(),
-    })
-    if (!res.ok) {
-      setError(await parseError(res))
-      return
-    }
-    openCredit(openedCreditId)
+  if (!openedCreditId || !selectedClient?.id) return
+
+  const res = await fetch(`${API}/credits/installments/${installmentId}/pay`, {
+    method: 'POST',
+    headers: withAuth(),
+  })
+
+  if (!res.ok) {
+    setError(await parseError(res))
+    return
   }
+
+  await openCredit(openedCreditId)
+  await loadAccounts(selectedClient.id)
+
+  showToast('Вноската е платена')
+   }
 
   const refreshCredits = async () => {
     if (!selectedClient?.id) return
@@ -766,7 +778,12 @@ function App() {
               </div>
 
               <div className="tabs">
-                <button className={profileTab === 'accounts' ? 'tab active' : 'tab'} onClick={() => setProfileTab('accounts')}>Сметки</button>
+                <button className={profileTab === 'accounts' ? 'tab active' : 'tab'} onClick={() => 
+                {setProfileTab('accounts') 
+                  if (selectedClient?.id) {
+                  loadAccounts(selectedClient.id)
+                 }
+              }}>Сметки</button>
                 <button className={profileTab === 'credits' ? 'tab active' : 'tab'} onClick={() => setProfileTab('credits')}>Кредитиране</button>
               </div>
 
