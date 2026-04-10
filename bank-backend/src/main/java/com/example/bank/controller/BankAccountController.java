@@ -40,5 +40,10 @@ public class BankAccountController {
     public BankAccountDto deposit(@PathVariable("accountId") Long accountId, @Valid @RequestBody DepositRequestDto dto) {
         return bankAccountService.deposit(accountId, dto);
     }
+
+    @PostMapping("/{accountId}/withdraw")
+    public BankAccountDto withdraw(@PathVariable("accountId") Long accountId, @Valid @RequestBody DepositRequestDto dto) {
+        return bankAccountService.withdraw(accountId, dto);
+    }
 }
 

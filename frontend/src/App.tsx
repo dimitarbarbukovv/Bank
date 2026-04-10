@@ -82,8 +82,8 @@ function App() {
   const [accounts, setAccounts] = useState<BankAccount[]>([])
   const [newBalance, setNewBalance] = useState(0)
   const [newCurrency, setNewCurrency] = useState<'EUR' | 'USD'>('EUR')
-  const [depositAmounts, setDepositAmounts] = useState<Record<number, number>>({})
-
+  const [amounts, setAmounts] = useState<Record<number, number>>({})
+  
   const [credits, setCredits] = useState<CreditSummary[]>([])
   const [openedCreditId, setOpenedCreditId] = useState<number | null>(null)
   const [schedule, setSchedule] = useState<Installment[]>([])
@@ -407,7 +407,7 @@ function App() {
   }
 
   const depositToAccount = async (accountId: number) => {
-    const amount = depositAmounts[accountId] ?? 0
+    const amount = amounts[accountId] ?? 0
     if (amount <= 0) {
       setError('Въведи валидна сума за внасяне')
       return
@@ -422,8 +422,34 @@ function App() {
       return
     }
     showToast('Сумата е внесена успешно')
-    setDepositAmounts((prev) => ({ ...prev, [accountId]: 0 }))
-    if (selectedClient?.id) loadAccounts(selectedClient.id)
+  setAmounts((prev) => ({ ...prev, [accountId]: 0 }))
+       if (selectedClient?.id) loadAccounts(selectedClient.id)
+     }
+
+     const withdrawFromAccount = async (accountId: number) => {
+     const amount = amounts[accountId] ?? 0
+
+     if (amount <= 0) {
+       setError('Въведи валидна сума за теглене')
+       return
+     }
+
+     const res = await fetch(`${API}/accounts/${accountId}/withdraw`, {
+       method: 'POST',
+       headers: withAuth({ 'Content-Type': 'application/json' }),
+       body: JSON.stringify({ amount }),
+     })
+
+     if (!res.ok) {
+       setError(await parseError(res))
+       return
+     }
+
+     showToast('Сумата е изтеглена успешно')
+
+     setAmounts((prev) => ({ ...prev, [accountId]: 0 }))
+
+     if (selectedClient?.id) loadAccounts(selectedClient.id)
   }
 
   const calculateSuggestion = async () => {
@@ -765,22 +791,22 @@ function App() {
                           <td>{a.status}</td>
                           <td>{a.createdByDisplayName ?? a.createdByUsername ?? '—'}</td>
                           <td>
-                            <div className="account-actions">
-                              <input
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                placeholder="Сума за внасяне"
-                                value={depositAmounts[a.id!] ?? 0}
-                                onChange={(e) =>
-                                  setDepositAmounts((prev) => ({ ...prev, [a.id!]: Number(e.target.value) }))
-                                }
-                                disabled={a.status === 'CLOSED'}
-                              />
-                              <button disabled={a.status === 'CLOSED'} onClick={() => depositToAccount(a.id!)}>
-                                Внеси
-                              </button>
-                            </div>
+                           <div className="account-actions">
+                             <input type="number" min={0} step="0.01" placeholder="Сума"
+                               value={amounts[a.id!] ?? 0}
+                               onChange={(e) =>
+                                 setAmounts((prev) => ({ ...prev, [a.id!]: Number(e.target.value) }))
+                               }
+                               disabled={a.status === 'CLOSED'}
+                             />
+                             <button disabled={a.status === 'CLOSED'} onClick={() => depositToAccount(a.id!)}>
+                               Внеси
+                             </button>
+                           
+                             <button disabled={a.status === 'CLOSED'} onClick={() => withdrawFromAccount(a.id!)}>
+                               Изтегли
+                             </button>
+                           </div>
                             <button disabled={a.balance !== 0 || a.status === 'CLOSED'} onClick={() => closeAccount(a.id!)}>
                               Закрий
                             </button>

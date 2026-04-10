@@ -93,5 +93,27 @@ public class BankAccountService {
 
         return bankAccountMapper.toDto(acc);
     }
+
+    @Transactional
+      public BankAccountDto withdraw(Long accountId, DepositRequestDto dto) {
+          BankAccount acc = bankAccountRepository.findById(accountId)
+                      .orElseThrow(() -> new NotFoundException("Сметката не е намерена"));
+      
+          if (acc.getStatus() == AccountStatus.CLOSED) {
+              throw new BusinessException("Не може да теглите от закрита сметка");
+          }
+      
+          if (dto.getAmount() == null || dto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+              throw new BusinessException("Невалидна сума за теглене");
+          }
+      
+          if (acc.getBalance().compareTo(dto.getAmount()) < 0) {
+              throw new BusinessException("Недостатъчна наличност");
+          }
+      
+          acc.setBalance(acc.getBalance().subtract(dto.getAmount()));
+      
+          return bankAccountMapper.toDto(acc);
+      }
 }
 
