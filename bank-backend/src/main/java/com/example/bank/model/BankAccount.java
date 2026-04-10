@@ -22,7 +22,6 @@ public class BankAccount {
     private String iban;
 
     @NotNull
-    @DecimalMin("0.00")
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;
 

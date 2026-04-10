@@ -218,6 +218,20 @@ public class CreditService {
     public void markInstallmentPaid(Long installmentId) {
         Installment inst = installmentRepository.findById(installmentId)
                 .orElseThrow(() -> new NotFoundException("Вноската не е намерена"));
+        
+        if (inst.isPaid()) {
+           throw new BusinessException("Вноската вече е платена");
+        }
+
+        Credit credit = inst.getCredit();
+
+        if (credit.getDisbursementAccount() == null) {
+           throw new BusinessException("Няма свързана сметка към кредита");
+        }
+
+        BankAccount account = credit.getDisbursementAccount();
+
+        account.setBalance(account.getBalance().subtract(inst.getPaymentAmount()));
         inst.setPaid(true);
     }
 
