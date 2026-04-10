@@ -214,7 +214,7 @@ public class CreditService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE')")
     public void markInstallmentPaid(Long installmentId) {
         Installment inst = installmentRepository.findById(installmentId)
                 .orElseThrow(() -> new NotFoundException("Вноската не е намерена"));
