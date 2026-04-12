@@ -604,3 +604,12 @@
     font-size: 22px;
   }
 }
+
+tr.negative-client {
+  background-color: #ffe5e5 !important;
+  color: #b30000 !important;
+}
+
+tr.negative-client td {
+  background-color: #ffe5e5 !important;
+}

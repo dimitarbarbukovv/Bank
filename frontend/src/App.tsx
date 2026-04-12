@@ -83,6 +83,7 @@ function App() {
   const [newBalance, setNewBalance] = useState(0)
   const [newCurrency, setNewCurrency] = useState<'EUR' | 'USD'>('EUR')
   const [amounts, setAmounts] = useState<Record<number, number>>({})
+  const [negativeClients, setNegativeClients] = useState<Set<number>>(new Set())
   
   const [credits, setCredits] = useState<CreditSummary[]>([])
   const [openedCreditId, setOpenedCreditId] = useState<number | null>(null)
@@ -263,35 +264,79 @@ function App() {
     setPasswordForm({ current: '', next: '', next2: '' })
   }
 
-  const searchClients = async () => {
-    setError(null)
-    const q = [filters.firstName, filters.lastName, filters.egn].filter(Boolean).join(' ')
-    const res = await fetch(
-      q.trim() ? `${API}/clients?q=${encodeURIComponent(q)}` : `${API}/clients`,
-      { headers: withAuth() },
-    )
-    if (!res.ok) {
-      setError(await parseError(res))
-      return
-    }
-    const data = (await res.json()) as Client[]
-    const refined = data.filter((c) =>
-      (!filters.firstName || (c.firstName ?? '').toLowerCase().includes(filters.firstName.toLowerCase())) &&
-      (!filters.lastName || (c.lastName ?? '').toLowerCase().includes(filters.lastName.toLowerCase())) &&
-      (!filters.egn || (c.egn ?? '').includes(filters.egn)),
-    )
-    setClients(refined)
+const searchClients = async () => {
+  setError(null)
+
+  const q = [filters.firstName, filters.lastName, filters.egn].filter(Boolean).join(' ')
+  const res = await fetch(
+    q.trim() ? `${API}/clients?q=${encodeURIComponent(q)}` : `${API}/clients`,
+    { headers: withAuth() },
+  )
+
+  if (!res.ok) {
+    setError(await parseError(res))
+    return
   }
 
-  const loadAllClients = async (authToken?: string) => {
-    const headers = authToken ? { Authorization: `Bearer ${authToken}` } : withAuth()
-    const res = await fetch(`${API}/clients`, { headers })
-    if (!res.ok) {
-      setError(await parseError(res))
-      return
-    }
-    setClients(await res.json())
+  const data = (await res.json()) as Client[]
+
+  const refined = data.filter((c) =>
+    (!filters.firstName || (c.firstName ?? '').toLowerCase().includes(filters.firstName.toLowerCase())) &&
+    (!filters.lastName || (c.lastName ?? '').toLowerCase().includes(filters.lastName.toLowerCase())) &&
+    (!filters.egn || (c.egn ?? '').includes(filters.egn)),
+  )
+
+  setClients(refined)
+  const negativeSet = new Set<number>()
+
+  await Promise.all(
+    refined.map(async (c) => {
+      const r = await fetch(`${API}/accounts/by-client/${c.id}`, { headers: withAuth() })
+      if (r.ok) {
+        const accs: BankAccount[] = await r.json()
+        if (accs.some(a => a.balance < 0)) {
+          negativeSet.add(c.id!)
+        }
+      }
+    })
+  )
+
+  setNegativeClients(negativeSet)
+}
+
+const loadAllClients = async (authToken?: string) => {
+  const headers = authToken ? { Authorization: `Bearer ${authToken}` } : withAuth()
+  const res = await fetch(`${API}/clients`, { headers })
+
+  if (!res.ok) {
+    setError(await parseError(res))
+    return
   }
+
+  const data = await res.json()
+  setClients(data)
+
+  const negativeSet = new Set<number>()
+
+  await Promise.all(
+    data.map(async (c: Client) => {
+      const r = await fetch(`${API}/accounts/by-client/${c.id}`, { headers })
+      if (r.ok) {
+        const accs: BankAccount[] = await r.json()
+
+        console.log(`Client ${c.id} accounts:`, accs)   // 👈 SEE DATA
+
+        if (accs.some(a => a.balance < 0)) {
+          negativeSet.add(c.id!)
+        }
+      }
+    })
+  )
+
+  console.log('NEGATIVE CLIENTS SET:', Array.from(negativeSet)) // 👈 IMPORTANT
+
+  setNegativeClients(negativeSet)
+}
 
   const openClient = async (client: Client) => {
     setSelectedClient(client)
@@ -658,7 +703,11 @@ function App() {
             <thead><tr><th>Тип</th><th>Име</th><th>Фамилия/Фирма</th><th>ЕГН/ЕИК</th><th>Регистрирал</th></tr></thead>
             <tbody>
               {clients.map((c) => (
-                <tr key={c.id} className="clickable-row" onClick={() => openClient(c)}>
+                  <tr
+                    key={c.id}
+                    className={`clickable-row ${negativeClients.has(c.id!) ? 'negative-client' : ''}`}
+                    onClick={() => openClient(c)}
+                  >
                   <td>{c.type === 'INDIVIDUAL' ? 'ФЛ' : 'ЮЛ'}</td>
                   <td>{c.type === 'INDIVIDUAL' ? (c.firstName ?? '—') : (c.representativeName ?? '—')}</td>
                   <td>{c.type === 'INDIVIDUAL' ? (c.lastName ?? '—') : (c.companyName ?? '—')}</td>
