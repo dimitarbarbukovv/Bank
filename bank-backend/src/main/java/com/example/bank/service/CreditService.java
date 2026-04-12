@@ -39,8 +39,15 @@ public class CreditService {
     public Long createCredit(CreditRequestDto dto) {
         validateMortgageInputs(dto);
 
+        //Check for negative balance
+        boolean hasNegativeBalance = bankAccountRepository.existsByOwner_IdAndBalanceLessThan(dto.getClientId(), BigDecimal.ZERO);
+        if (hasNegativeBalance) {
+            throw new BusinessException("Клиентът има сметка с отрицателен баланс и не може да получи кредит");
+        }
+
         Credit credit = new Credit();
         credit.setClient(clientService.getById(dto.getClientId()));
+
         credit.setType(dto.getType());
         credit.setPrincipal(dto.getPrincipal());
         credit.setTermMonths(dto.getTermMonths());
