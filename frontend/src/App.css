@@ -613,3 +613,19 @@ tr.negative-client {
 tr.negative-client td {
   background-color: #ffe5e5 !important;
 }
+
+.page h1 {
+  color: white;
+}
+
+.page h2 {
+  color: white;
+}
+
+.page h3 {
+  color: white;
+}
+
+.page h4 {
+  color: white;
+}
