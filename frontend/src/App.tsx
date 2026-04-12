@@ -705,7 +705,6 @@ const markPaid = async (installmentId: number) => {
         <div className="logo">🏦 Bank Portal</div>
         <nav className="menu">
           <button className={menu === 'clients' ? 'active' : ''} onClick={() => setMenu('clients')}>Клиенти</button>
-          <button className={menu === 'profile' ? 'active' : ''} onClick={() => setMenu('profile')}>Профил клиент</button>
           {role === 'ROLE_ADMIN' && (
             <button className={menu === 'employees' ? 'active' : ''} onClick={() => setMenu('employees')}>Служители</button>
           )}
