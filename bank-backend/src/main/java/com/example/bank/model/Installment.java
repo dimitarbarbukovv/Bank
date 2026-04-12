@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
+import java.time.LocalDateTime;
+
 
 import java.math.BigDecimal;
 
@@ -50,5 +52,8 @@ public class Installment {
 
     @Column(name = "paid", nullable = false)
     private boolean paid = false;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
 }
 

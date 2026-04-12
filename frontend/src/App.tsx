@@ -58,6 +58,7 @@ interface Installment {
   interestPart: number
   remainingPrincipal: number
   paid: boolean
+  paidAt?: string
 }
 
 const API = 'http://localhost:8080/api'
@@ -622,8 +623,16 @@ const loadAllClients = async (authToken?: string) => {
     if (res.ok) setSchedule(await res.json())
   }
 
-  const markPaid = async (installmentId: number) => {
+const markPaid = async (installmentId: number) => {
   if (!openedCreditId || !selectedClient?.id) return
+
+  setSchedule(prev =>
+    prev.map(s =>
+      s.id === installmentId
+        ? { ...s, paid: true, paidAt: new Date().toISOString() }
+        : s
+    )
+  )
 
   const res = await fetch(`${API}/credits/installments/${installmentId}/pay`, {
     method: 'POST',
@@ -632,6 +641,8 @@ const loadAllClients = async (authToken?: string) => {
 
   if (!res.ok) {
     setError(await parseError(res))
+
+    await openCredit(openedCreditId)
     return
   }
 
@@ -639,7 +650,7 @@ const loadAllClients = async (authToken?: string) => {
   await loadAccounts(selectedClient.id)
 
   showToast('Вноската е платена')
-   }
+}
 
   const refreshCredits = async () => {
     if (!selectedClient?.id) return
@@ -1089,7 +1100,17 @@ const loadAllClients = async (authToken?: string) => {
                               <td>{s.principalPart.toFixed(2)}</td>
                               <td>{s.interestPart.toFixed(2)}</td>
                               <td>{s.remainingPrincipal.toFixed(2)}</td>
-                              <td>{!s.paid && <button onClick={() => markPaid(s.id)}>Платена</button>}</td>
+                              <td>
+                                {!s.paid ? (
+                                  <button onClick={() => markPaid(s.id)}>Плащане</button>
+                                ) : (
+                                  <span>
+                                    {s.paidAt
+                                      ? new Date(s.paidAt).toLocaleString('bg-BG')
+                                      : 'Платено'}
+                                  </span>
+                                )}
+                              </td>
                             </tr>
                           ))}
                         </tbody>

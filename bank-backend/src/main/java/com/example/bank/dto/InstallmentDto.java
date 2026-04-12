@@ -3,6 +3,7 @@ package com.example.bank.dto;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 public class InstallmentDto {
@@ -14,5 +15,6 @@ public class InstallmentDto {
     private BigDecimal interestPart;
     private BigDecimal remainingPrincipal;
     private boolean paid;
+    private LocalDateTime paidAt;
 }
 

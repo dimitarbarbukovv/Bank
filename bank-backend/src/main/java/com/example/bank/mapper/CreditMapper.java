@@ -36,6 +36,7 @@ public class CreditMapper {
         dto.setInterestPart(inst.getInterestPart());
         dto.setRemainingPrincipal(inst.getRemainingPrincipal());
         dto.setPaid(inst.isPaid());
+        dto.setPaidAt(inst.getPaidAt());
         return dto;
     }
 
