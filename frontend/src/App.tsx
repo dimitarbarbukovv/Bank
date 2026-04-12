@@ -126,22 +126,25 @@ function App() {
     setTimeout(() => setToast(null), 2500)
   }
 
-  const logout = () => {
-    setToken(null)
-    setRole(null)
-    setPassword('')
-    setError(null)
-    setToast(null)
-    setMenu('clients')
-    setProfileTab('accounts')
-    setSelectedClient(null)
-    setClients([])
-    setAccounts([])
-    setCredits([])
-    setSchedule([])
-    setOpenedCreditId(null)
-    setMyProfile(null)
-  }
+const logout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('role')
+
+  setToken(null)
+  setRole(null)
+  setPassword('')
+  setError(null)
+  setToast(null)
+  setMenu('clients')
+  setProfileTab('accounts')
+  setSelectedClient(null)
+  setClients([])
+  setAccounts([])
+  setCredits([])
+  setSchedule([])
+  setOpenedCreditId(null)
+  setMyProfile(null)
+}
 
   const parseError = async (res: Response) => {
     const body = await res.json().catch(() => ({}))
@@ -170,23 +173,31 @@ function App() {
     }
   }
 
-  const login = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    const res = await fetch(`${API}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    })
-    if (!res.ok) {
-      setError('Грешен потребител или парола')
-      return
-    }
-    const body = await res.json()
-    setToken(body.token)
-    setRole(body.role)
-    loadAllClients(body.token)
+const login = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setError(null)
+
+  const res = await fetch(`${API}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+
+  if (!res.ok) {
+    setError('Грешен потребител или парола')
+    return
   }
+
+  const body = await res.json()
+
+  localStorage.setItem('token', body.token)
+  localStorage.setItem('role', body.role)
+
+  setToken(body.token)
+  setRole(body.role)
+
+  loadAllClients(body.token)
+}
 
   useEffect(() => {
     if (token) loadMe()
@@ -197,6 +208,24 @@ function App() {
     const t = window.setTimeout(() => setError(null), 8000)
     return () => window.clearTimeout(t)
   }, [error])
+
+useEffect(() => {
+  const storedToken = localStorage.getItem('token')
+  const storedRole = localStorage.getItem('role')
+
+  if (storedToken) {
+    setToken(storedToken)
+    setRole(storedRole)
+
+    loadAllClients(storedToken)
+  }
+}, [])
+
+useEffect(() => {
+  if (menu === 'clients' && token) {
+    loadAllClients()
+  }
+}, [menu])
 
   const loadEmployees = async () => {
     const res = await fetch(`${API}/employees`, { headers: withAuth() })
