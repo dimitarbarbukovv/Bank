@@ -40,6 +40,7 @@ interface CreditSummary {
   status: 'NEW' | 'IN_PROGRESS' | 'PAID'
   createdByUsername?: string
   createdByDisplayName?: string
+  disbursementIban?: string
 }
 
 interface Employee {
@@ -99,6 +100,7 @@ function App() {
     propertyValue: 0,
     downPayment: 0,
   })
+  const openedCredit = credits.find(c => c.id === openedCreditId)
 
   const [myProfile, setMyProfile] = useState<Employee | null>(null)
   const [profileDisplayName, setProfileDisplayName] = useState('')
@@ -1089,7 +1091,12 @@ const markPaid = async (installmentId: number) => {
 
                   {openedCreditId && (
                     <div className="schedule-box">
-                      <h3>Погасителен план — кредит #{openedCreditId}</h3>
+                      <h3>
+                        Погасителен план — кредит #{openedCreditId}
+                        {openedCredit?.disbursementIban && (
+                          <> (IBAN: {openedCredit.disbursementIban})</>
+                        )}
+                      </h3>
                       <table className="table">
                         <thead><tr><th>Месец</th><th>Вноска</th><th>Главница</th><th>Лихва</th><th>Остатък</th><th></th></tr></thead>
                         <tbody>

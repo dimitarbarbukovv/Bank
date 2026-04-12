@@ -17,5 +17,6 @@ public class CreditSummaryDto {
     private String status;
     private String createdByUsername;
     private String createdByDisplayName;
+    private String disbursementIban;
 }
 

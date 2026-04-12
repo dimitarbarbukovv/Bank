@@ -24,6 +24,10 @@ public class CreditMapper {
             dto.setCreatedByUsername(e.getUsername());
             dto.setCreatedByDisplayName(resolveEmployeeDisplay(e));
         }
+
+        dto.setDisbursementIban(
+                c.getDisbursementAccount() != null ? c.getDisbursementAccount().getIban() : null
+        );
         return dto;
     }
 
