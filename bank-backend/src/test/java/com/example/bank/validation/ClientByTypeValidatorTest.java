@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ClientByTypeValidatorTest {
@@ -113,6 +114,65 @@ class ClientByTypeValidatorTest {
     void companyEikLetters_fails() {
         ClientDto dto = company("АОББ АД", "123456789a", "Георги Георгиев");
         assertViolationContains(dto, "eik", "точно 10 цифри");
+    }
+
+    @Test
+    void individualMixedLanguages_failsForNames() {
+
+        ClientDto dto = new ClientDto();
+        dto.setFirstName("IvanПетър");
+        dto.setLastName("PetrovИван");
+
+        Set<ConstraintViolation<ClientDto>> violations = validator.validate(dto);
+
+        assertTrue(
+                violations.stream()
+                        .anyMatch(v -> v.getPropertyPath().toString().equals("firstName"))
+        );
+        assertTrue(
+                violations.stream()
+                        .anyMatch(v -> v.getPropertyPath().toString().equals("lastName"))
+        );
+    }
+
+    @Test
+    void individualLongFirstName_fails() {
+        String longName = "A".repeat(101); // 101 символа
+
+        ClientDto dto = individual(longName, "Петровски", "0123456789");
+        assertViolationContains(dto, "firstName", "Името може да е до 100 символа");
+    }
+
+    @Test
+    void individualLongLastName_fails() {
+        String longName = "A".repeat(101); // 101 символа
+
+        ClientDto dto = individual("Ivan", longName, "0123456789");
+        assertViolationContains(dto, "firstName", "Името може да е до 100 символа");
+    }
+
+    @Test
+    void individualLatinFirstName_fails() {
+        ClientDto dto = individual("Anna1!_", "Петровски", "0123456789");
+        assertViolationContains(dto, "firstName", "Името трябва да бъде само на кирилица или само на латиница");
+    }
+
+    @Test
+    void individualLatinLastName_fails() {
+        ClientDto dto = individual("Anna", "Petrowdki2!_", "0123456789");
+        assertViolationContains(dto, "lastName", "Фамилията трябва да бъде само на кирилица или само на латиница");
+    }
+
+    @Test
+    void individualCyrillicFirstName_fails() {
+        ClientDto dto = individual("Анна1!_", "Петровски", "0123456789");
+        assertViolationContains(dto, "firstName", "Името трябва да бъде само на кирилица или само на латиница");
+    }
+
+    @Test
+    void individualCyrilicLastName_fails() {
+        ClientDto dto = individual("Анна", "Петровски2!_", "0123456789");
+        assertViolationContains(dto, "lastName", "Фамилията трябва да бъде само на кирилица или само на латиница");
     }
 
     private static ClientDto individual(String first, String last, String egn) {

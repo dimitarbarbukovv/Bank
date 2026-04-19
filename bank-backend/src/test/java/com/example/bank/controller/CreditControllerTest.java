@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -79,4 +79,44 @@ class CreditControllerTest {
         );
         assertEquals(BigDecimal.valueOf(15000), out.get("maxPrincipal"));
     }
+
+    @Test
+    void createHandlesNullDto() {
+        when(creditService.createCredit(null)).thenReturn(1L);
+
+        Map<String, Long> out = creditController.create(null);
+
+        assertEquals(1L, out.get("id"));
+    }
+
+    @Test
+    void scheduleReturnsEmptyList() {
+        when(creditService.getSchedule(2L)).thenReturn(List.of());
+
+        assertTrue(creditController.schedule(2L).isEmpty());
+    }
+
+    @Test
+    void statusHasCorrectKey() {
+        when(creditService.getCreditStatus(7L)).thenReturn("APPROVED");
+
+        Map<String, String> out = creditController.status(7L);
+
+        assertTrue(out.containsKey("status"));
+        assertEquals("APPROVED", out.get("status"));
+    }
+
+    @Test
+    void suggestionHandlesInvalidType() {
+        assertThrows(IllegalArgumentException.class, () ->
+                creditController.suggestion(
+                        "INVALID_TYPE",
+                        BigDecimal.valueOf(3000),
+                        60,
+                        null,
+                        null
+                )
+        );
+    }
+
 }

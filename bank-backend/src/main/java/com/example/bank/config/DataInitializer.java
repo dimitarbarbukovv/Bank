@@ -37,22 +37,22 @@ public class DataInitializer {
                     representative_name varchar(200) not null
                 )
             """);
-            jdbcTemplate.execute("""
-                insert into individual_clients (id, first_name, last_name, egn)
-                select c.id, c.first_name, c.last_name, c.egn
-                from clients c
-                where c.type = 'INDIVIDUAL'
-                  and c.egn is not null
-                  and not exists (select 1 from individual_clients i where i.id = c.id)
-            """);
-            jdbcTemplate.execute("""
-                insert into company_clients (id, company_name, eik, representative_name)
-                select c.id, c.company_name, c.eik, c.representative_name
-                from clients c
-                where c.type = 'COMPANY'
-                  and c.eik is not null
-                  and not exists (select 1 from company_clients cc where cc.id = c.id)
-            """);
+//            jdbcTemplate.execute("""
+//                insert into individual_clients (id, first_name, last_name, egn)
+//                select c.id, c.first_name, c.last_name, c.egn
+//                from clients c
+//                where c.type = 'INDIVIDUAL'
+//                  and c.egn is not null
+//                  and not exists (select 1 from individual_clients i where i.id = c.id)
+//            """);
+//            jdbcTemplate.execute("""
+//                insert into company_clients (id, company_name, eik, representative_name)
+//                select c.id, c.company_name, c.eik, c.representative_name
+//                from clients c
+//                where c.type = 'COMPANY'
+//                  and c.eik is not null
+//                  and not exists (select 1 from company_clients cc where cc.id = c.id)
+//            """);
             jdbcTemplate.execute("""
                 create unique index if not exists uk_installments_credit_month
                 on installments(credit_id, month_number)

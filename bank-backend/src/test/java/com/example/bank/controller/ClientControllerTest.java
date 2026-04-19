@@ -45,4 +45,5 @@ class ClientControllerTest {
         assertEquals(1, out.size());
         assertEquals("Ivan", out.getFirst().getFirstName());
     }
+
 }

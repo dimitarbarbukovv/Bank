@@ -138,4 +138,36 @@ class BankAccountServiceTest {
 
         assertEquals(BigDecimal.valueOf(15), out.getBalance());
     }
+
+    @Test
+    void openAccountRetriesWhenIbanAlreadyExists() {
+        IndividualClient owner = new IndividualClient();
+        owner.setId(3L);
+        owner.setType(ClientType.INDIVIDUAL);
+
+        Employee creator = new Employee();
+        creator.setDisplayName("Admin");
+
+        when(clientService.getById(3L)).thenReturn(owner);
+        when(currentUserService.getCurrentEmployee()).thenReturn(Optional.of(creator));
+
+        // първият IBAN "зает", вторият свободен
+        when(bankAccountRepository.findByIban(any()))
+                .thenReturn(Optional.of(new BankAccount()))
+                .thenReturn(Optional.empty());
+
+        when(bankAccountRepository.save(any())).thenAnswer(i -> {
+            BankAccount a = i.getArgument(0);
+            a.setId(1L);
+            return a;
+        });
+
+        BankAccountDto dto = new BankAccountDto();
+        dto.setClientId(3L);
+        dto.setBalance(BigDecimal.TEN);
+
+        BankAccountDto out = bankAccountService.openAccount(dto);
+
+        assertNotNull(out.getIban());
+    }
 }

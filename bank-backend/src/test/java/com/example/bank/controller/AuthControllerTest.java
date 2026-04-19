@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -87,4 +88,62 @@ class AuthControllerTest {
         assertEquals("Паролата е сменена успешно", out.getBody().get("message"));
         verify(employeeService).changeOwnPassword("old", "newpass");
     }
+
+    @Test
+    void loginFailsWhenAuthenticationThrows() {
+        AuthController.LoginRequest req = new AuthController.LoginRequest();
+        req.setUsername("admin");
+        req.setPassword("wrong");
+
+        when(authenticationManager.authenticate(any()))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
+        assertThrows(BadCredentialsException.class, () -> authController.login(req));
+    }
+
+    @Test
+    void loginReturnsUserRole() {
+        AuthController.LoginRequest req = new AuthController.LoginRequest();
+        req.setUsername("user");
+        req.setPassword("pass");
+
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                "user",
+                "x",
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+
+        when(authenticationManager.authenticate(any())).thenReturn(auth);
+        when(jwtService.generateToken("user", "ROLE_USER")).thenReturn("jwt");
+
+        ResponseEntity<Map<String, String>> response = authController.login(req);
+
+        assertEquals("ROLE_USER", response.getBody().get("role"));
+    }
+
+    @Test
+    void updateMeWithValidDto() {
+        UpdateProfileDto dto = new UpdateProfileDto();
+        dto.setDisplayName("New Name");
+
+        EmployeeDto result = new EmployeeDto();
+        result.setUsername("u1");
+
+        when(employeeService.updateCurrentProfile("New Name")).thenReturn(result);
+
+        EmployeeDto out = authController.updateMe(dto);
+
+        assertEquals("u1", out.getUsername());
+    }
+
+    @Test
+    void meReturnsNullSafely() {
+        when(employeeService.getCurrentProfile()).thenReturn(null);
+
+        EmployeeDto out = authController.me();
+
+        assertNull(out);
+    }
+
+
 }

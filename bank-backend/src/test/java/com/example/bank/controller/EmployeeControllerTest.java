@@ -12,7 +12,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,4 +49,23 @@ class EmployeeControllerTest {
         when(employeeService.update(7L, in)).thenReturn(out);
         assertEquals(7L, employeeController.update(7L, in).getId());
     }
+
+    @Test
+    void createCallsService() {
+        CreateEmployeeDto in = new CreateEmployeeDto();
+
+        when(employeeService.create(in)).thenReturn(new EmployeeDto());
+
+        employeeController.create(in);
+
+        verify(employeeService).create(in);
+    }
+
+    @Test
+    void createWithNullDto() {
+        when(employeeService.create(null)).thenReturn(new EmployeeDto());
+
+        assertDoesNotThrow(() -> employeeController.create(null));
+    }
+
 }

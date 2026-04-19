@@ -3,6 +3,7 @@ package com.example.bank.dto;
 import com.example.bank.model.ClientType;
 import com.example.bank.validation.ValidClientByType;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -16,9 +17,13 @@ public class ClientDto {
     private ClientType type;
 
     // Individual
+    @Pattern(regexp = "^[\\p{IsCyrillic} ]+$|^[A-Za-z ]+$",
+            message = "Името трябва да бъде само на кирилица или само на латиница")
     @Size(max = 100, message = "Името може да е до 100 символа")
     private String firstName;
 
+    @Pattern(regexp = "^[\\p{IsCyrillic} ]+$|^[A-Za-z ]+$",
+            message = "Фамилията трябва да бъде само на кирилица или само на латиница")
     @Size(max = 100, message = "Фамилията може да е до 100 символа")
     private String lastName;
 
