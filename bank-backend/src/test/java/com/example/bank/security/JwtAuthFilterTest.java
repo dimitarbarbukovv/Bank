@@ -68,6 +68,7 @@ class JwtAuthFilterTest {
         when(employeeDetailsService.loadUserByUsername("admin")).thenReturn(
                 new User("admin", "x", List.of())
         );
+        when(jwtService.isTokenValid(eq("good"), any())).thenReturn(true);
 
         jwtAuthFilter.doFilterInternal(req, res, filterChain);
 

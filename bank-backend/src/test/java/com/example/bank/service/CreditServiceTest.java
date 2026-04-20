@@ -180,12 +180,22 @@ class CreditServiceTest {
 
     @Test
     void markInstallmentPaidSetsFlag() {
+        BankAccount account = new BankAccount();
+        account.setBalance(BigDecimal.valueOf(5000));
+
+        Credit credit = new Credit();
+        credit.setDisbursementAccount(account);
+
         Installment inst = new Installment();
         inst.setPaid(false);
+        inst.setCredit(credit);
+        inst.setPaymentAmount(BigDecimal.valueOf(250));
         when(installmentRepository.findById(3L)).thenReturn(Optional.of(inst));
 
         creditService.markInstallmentPaid(3L);
         assertTrue(inst.isPaid());
+        assertNotNull(inst.getPaidAt());
+        assertEquals(BigDecimal.valueOf(4750), account.getBalance());
     }
 
     @Test

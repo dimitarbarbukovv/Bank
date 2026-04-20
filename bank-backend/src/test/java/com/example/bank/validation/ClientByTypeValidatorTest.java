@@ -148,7 +148,7 @@ class ClientByTypeValidatorTest {
         String longName = "A".repeat(101); // 101 символа
 
         ClientDto dto = individual("Ivan", longName, "0123456789");
-        assertViolationContains(dto, "firstName", "Името може да е до 100 символа");
+        assertViolationContains(dto, "lastName", "Фамилията може да е до 100 символа");
     }
 
     @Test
