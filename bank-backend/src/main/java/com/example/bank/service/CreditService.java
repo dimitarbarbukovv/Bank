@@ -6,17 +6,13 @@ import com.example.bank.dto.InstallmentDto;
 import com.example.bank.exception.BusinessException;
 import com.example.bank.exception.NotFoundException;
 import com.example.bank.mapper.CreditMapper;
-import com.example.bank.model.BankAccount;
-import com.example.bank.model.Credit;
-import com.example.bank.model.CreditType;
-import com.example.bank.model.Installment;
-import com.example.bank.repository.BankAccountRepository;
-import com.example.bank.repository.CreditRepository;
-import com.example.bank.repository.InstallmentRepository;
+import com.example.bank.model.*;
+import com.example.bank.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -31,6 +27,7 @@ public class CreditService {
     private final CreditRepository creditRepository;
     private final InstallmentRepository installmentRepository;
     private final BankAccountRepository bankAccountRepository;
+    private final CreditInterestSettingRepository settingRepository;
     private final ClientService clientService;
     private final CurrentUserService currentUserService;
     private final CreditMapper creditMapper;
@@ -102,49 +99,99 @@ public class CreditService {
         return credit.getId();
     }
 
-    public BigDecimal calculateSuggestedMaxPrincipal(CreditType type, BigDecimal netIncome, Integer termMonths,
-                                                     BigDecimal propertyValue, BigDecimal downPayment) {
-        if (netIncome == null || termMonths == null || termMonths <= 0) {
-            return BigDecimal.ZERO;
-        }
-        BigDecimal rate = getAnnualRateForType(type, netIncome);
-        BigDecimal maxMonthly = netIncome.multiply(BigDecimal.valueOf(0.30)).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal monthlyRate = rate.divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)
-                .divide(BigDecimal.valueOf(12), 10, RoundingMode.HALF_UP);
-        BigDecimal onePlus = monthlyRate.add(BigDecimal.ONE).pow(termMonths);
-        BigDecimal incomeBasedMax = maxMonthly.multiply(onePlus.subtract(BigDecimal.ONE))
-                .divide(monthlyRate.multiply(onePlus), 2, RoundingMode.HALF_UP);
-        if (type != CreditType.MORTGAGE || propertyValue == null || downPayment == null
-                || propertyValue.compareTo(BigDecimal.ZERO) <= 0) {
-            return incomeBasedMax;
-        }
-
-        BigDecimal minDownPayment = propertyValue.multiply(BigDecimal.valueOf(0.20)).setScale(2, RoundingMode.HALF_UP);
-        if (downPayment.compareTo(minDownPayment) < 0) {
-            return BigDecimal.ZERO;
-        }
-        BigDecimal ltvCap = propertyValue.subtract(downPayment).setScale(2, RoundingMode.HALF_UP);
-        if (ltvCap.compareTo(BigDecimal.ZERO) <= 0) {
-            return BigDecimal.ZERO;
-        }
-        return incomeBasedMax.min(ltvCap);
+    public BigDecimal calculateSuggestedMaxPrincipal(
+        CreditType type,
+        BigDecimal netIncome,
+        Integer termMonths,
+        BigDecimal propertyValue,
+        BigDecimal downPayment
+) {
+    if (netIncome == null || termMonths == null || termMonths <= 0) {
+        return BigDecimal.ZERO;
     }
 
+    CreditInterestSetting setting = getSetting(type, netIncome);
+
+    if (setting == null) {
+        throw new IllegalStateException(
+                "No CreditInterestSetting found for type=" + type + " and income=" + netIncome
+        );
+    }
+
+    if (setting.getMaxDebtRatio() == null) {
+        throw new IllegalStateException("maxDebtRatio is not configured");
+    }
+
+    if (setting.getInterestRate() == null) {
+        throw new IllegalStateException("interestRate is not configured");
+    }
+
+    BigDecimal rate = setting.getInterestRate();
+    BigDecimal debtRatio = setting.getMaxDebtRatio();
+
+    BigDecimal maxMonthly = netIncome
+            .multiply(debtRatio)
+            .setScale(2, RoundingMode.HALF_UP);
+
+    BigDecimal monthlyRate = rate
+            .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)
+            .divide(BigDecimal.valueOf(12), 10, RoundingMode.HALF_UP);
+
+    BigDecimal onePlus = monthlyRate.add(BigDecimal.ONE).pow(termMonths);
+
+    BigDecimal incomeBasedMax = maxMonthly
+            .multiply(onePlus.subtract(BigDecimal.ONE))
+            .divide(monthlyRate.multiply(onePlus), 2, RoundingMode.HALF_UP);
+
+    if (type != CreditType.MORTGAGE) {
+        return incomeBasedMax;
+    }
+
+    if (propertyValue == null || downPayment == null ||
+            propertyValue.compareTo(BigDecimal.ZERO) <= 0) {
+        return incomeBasedMax;
+    }
+
+    if (setting.getMinDownPaymentPct() == null) {
+        throw new IllegalStateException("minDownPaymentPct is not configured for MORTGAGE");
+    }
+
+    BigDecimal minDownPayment = propertyValue
+            .multiply(setting.getMinDownPaymentPct())
+            .setScale(2, RoundingMode.HALF_UP);
+
+    if (downPayment.compareTo(minDownPayment) < 0) {
+        return BigDecimal.ZERO;
+    }
+
+    BigDecimal ltvCap = propertyValue
+            .subtract(downPayment)
+            .setScale(2, RoundingMode.HALF_UP);
+
+    if (ltvCap.compareTo(BigDecimal.ZERO) <= 0) {
+        return BigDecimal.ZERO;
+    }
+
+    return incomeBasedMax.min(ltvCap);
+}
+
+    private CreditInterestSetting getSetting(CreditType type, BigDecimal income) {
+    return settingRepository.findByCreditType(type).stream()
+            .filter(s ->
+                    income.compareTo(s.getMinIncome()) >= 0 &&
+                    (s.getMaxIncome() == null || income.compareTo(s.getMaxIncome()) <= 0)
+            )
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("No setting found for income"));
+    }
+
+    @Cacheable("interestRates")
     private BigDecimal getAnnualRateForType(CreditType type, BigDecimal netIncome) {
         BigDecimal income = netIncome == null ? BigDecimal.ZERO : netIncome;
-        if (type == CreditType.CONSUMER) {
-            if (income.compareTo(BigDecimal.valueOf(1500)) < 0) {
-                return BigDecimal.valueOf(10.2);
-            }
-            if (income.compareTo(BigDecimal.valueOf(3000)) < 0) {
-                return BigDecimal.valueOf(8.9);
-            }
-            return BigDecimal.valueOf(7.6);
-        }
-        if (income.compareTo(BigDecimal.valueOf(2500)) < 0) {
-            return BigDecimal.valueOf(5.2);
-        }
-        return BigDecimal.valueOf(4.4);
+    
+        return settingRepository.findMatching(type, income)
+                .map(CreditInterestSetting::getInterestRate)
+                .orElseThrow(() -> new BusinessException("Няма конфигурирана лихва за този доход и тип кредит"));
     }
 
     private BigDecimal calculateAnnuityPayment(BigDecimal principal, int n, BigDecimal annualRate) {

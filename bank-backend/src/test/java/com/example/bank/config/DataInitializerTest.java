@@ -22,9 +22,9 @@ class DataInitializerTest {
         when(encoder.encode(any())).thenReturn("hash");
 
         DataInitializer initializer = new DataInitializer(encoder, jdbcTemplate);
-        CommandLineRunner runner = initializer.initEmployees(repo);
+        initializer.initEmployees(repo);
 
-        assertDoesNotThrow(() -> runner.run());
+        assertDoesNotThrow(() -> initializer.initEmployees(repo));
         verify(repo, times(2)).save(any(Employee.class));
     }
 
@@ -36,7 +36,7 @@ class DataInitializerTest {
         when(repo.count()).thenReturn(2L);
 
         DataInitializer initializer = new DataInitializer(encoder, jdbcTemplate);
-        initializer.initEmployees(repo).run();
+        initializer.initEmployees(repo);
 
         verify(repo, never()).save(any(Employee.class));
     }
