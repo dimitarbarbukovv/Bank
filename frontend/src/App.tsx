@@ -3,7 +3,7 @@ import './App.css'
 
 type ClientType = 'INDIVIDUAL' | 'COMPANY'
 type CreditType = 'CONSUMER' | 'MORTGAGE'
-type Menu = 'clients' | 'profile' | 'new-client' | 'employees' | 'my-account'
+type Menu = 'clients' | 'profile' | 'new-client' | 'employees' | 'my-account' | 'settings'
 type ProfileTab = 'accounts' | 'credits'
 
 interface Client {
@@ -62,9 +62,28 @@ interface Installment {
   paidAt?: string
 }
 
+interface InterestSetting {
+  id?: number
+  creditType: CreditType
+  minIncome: number
+  maxIncome?: number
+  interestRate: number
+  maxDebtRatio: number        // NEW (e.g. 0.3)
+  minDownPaymentPct?: number  // NEW (only for mortgage, e.g. 0.2)
+}
+
 const API = 'http://localhost:8080/api'
 
 function App() {
+  const [settings, setSettings] = useState<InterestSetting[]>([])
+const [newSetting, setNewSetting] = useState<InterestSetting>({
+  creditType: 'CONSUMER',
+  minIncome: 0,
+  maxIncome: undefined,
+  interestRate: 0,
+  maxDebtRatio: 0.3,
+  minDownPaymentPct: undefined,
+})
   const [token, setToken] = useState<string | null>(null)
   const [role, setRole] = useState<string | null>(null)
   const [username, setUsername] = useState('')
@@ -296,6 +315,17 @@ useEffect(() => {
     setPasswordForm({ current: '', next: '', next2: '' })
   }
 
+  const creditTypeLabel = (type: CreditType) => {
+  switch (type) {
+    case 'CONSUMER':
+      return 'Потребителски'
+    case 'MORTGAGE':
+      return 'Ипотечен'
+    default:
+      return type
+  } 
+  }
+
 const searchClients = async () => {
   setError(null)
 
@@ -379,6 +409,58 @@ const loadAllClients = async (authToken?: string) => {
     await Promise.all([loadAccounts(client.id!), loadCredits(client.id!)])
   }
 
+  const loadSettings = async () => {
+  const res = await fetch(`${API}/settings/interest`, { headers: withAuth() })
+  if (!res.ok) {
+    setError(await parseError(res))
+    return
+  }
+  setSettings(await res.json())
+}
+
+const createSetting = async (e: React.FormEvent) => {
+  e.preventDefault()
+
+  const res = await fetch(`${API}/settings/interest`, {
+    method: 'POST',
+    headers: withAuth({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(newSetting),
+  })
+
+  if (!res.ok) {
+    setError(await parseError(res))
+    return
+  }
+
+  showToast('Лихвата е добавена')
+
+setNewSetting({
+  creditType: 'CONSUMER',
+  minIncome: 0,
+  maxIncome: undefined,
+  interestRate: 0,
+  maxDebtRatio: 0.3,
+  minDownPaymentPct: undefined,
+})
+
+  loadSettings()
+}
+
+const deleteSetting = async (id: number) => {
+  const res = await fetch(`${API}/settings/interest/${id}`, {
+    method: 'DELETE',
+    headers: withAuth(),
+  })
+
+  if (!res.ok) {
+    setError(await parseError(res))
+    return
+  }
+
+  showToast('Изтрита настройка')
+  loadSettings()
+}
+
   const loadAccounts = async (clientId: number) => {
     const res = await fetch(`${API}/accounts/by-client/${clientId}`, { headers: withAuth() })
     if (res.ok) setAccounts(await res.json())
@@ -393,6 +475,12 @@ const loadAllClients = async (authToken?: string) => {
     }
     setCredits(await res.json())
   }
+
+  useEffect(() => {
+  if (menu === 'settings') {
+    loadSettings()
+  }
+  }, [menu, role])
 
   useEffect(() => {
     if (menu === 'profile' && profileTab === 'credits' && selectedClient?.id) {
@@ -584,7 +672,7 @@ const loadAllClients = async (authToken?: string) => {
       setError('Избери сметка за превод при потребителски кредит')
       return
     }
-    const res = await fetch(`${API}/credits`, {
+    const res = await  fetch(`${API}/credits`, {
       method: 'POST',
       headers: withAuth({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
@@ -705,6 +793,7 @@ const markPaid = async (installmentId: number) => {
         <div className="logo">🏦 Bank Portal</div>
         <nav className="menu">
           <button className={menu === 'clients' ? 'active' : ''} onClick={() => setMenu('clients')}>Клиенти</button>
+          <button className={menu === 'settings' ? 'active' : ''} onClick={() => setMenu('settings')}>Лихвени настройки</button>
           {role === 'ROLE_ADMIN' && (
             <button className={menu === 'employees' ? 'active' : ''} onClick={() => setMenu('employees')}>Служители</button>
           )}
@@ -840,6 +929,150 @@ const markPaid = async (installmentId: number) => {
           </div>
         </section>
       )}
+
+    {menu === 'settings' && (
+  <section className="page">
+    <h2>Лихвени настройки</h2>
+
+    <form className="form wide-form" onSubmit={createSetting}>
+      <label>
+        Тип кредит
+        <select
+          value={newSetting.creditType}
+          onChange={(e) =>
+            setNewSetting({
+              ...newSetting,
+              creditType: e.target.value as CreditType,
+            })
+          }
+        >
+          <option value="CONSUMER">Потребителски</option>
+          <option value="MORTGAGE">Ипотечен</option>
+        </select>
+      </label>
+
+      <label>
+        Мин. доход
+        <input
+          type="number"
+          value={newSetting.minIncome}
+          onChange={(e) =>
+            setNewSetting({
+              ...newSetting,
+              minIncome: Number(e.target.value),
+            })
+          }
+        />
+      </label>
+
+      <label>
+        Макс. доход
+        <input
+          type="number"
+          value={newSetting.maxIncome ?? ''}
+          onChange={(e) =>
+            setNewSetting({
+              ...newSetting,
+              maxIncome: e.target.value ? Number(e.target.value) : undefined,
+            })
+          }
+          placeholder="без лимит"
+        />
+      </label>
+
+      <label>
+        Лихва (%)
+        <input
+          type="number"
+          step="0.1"
+          value={newSetting.interestRate}
+          onChange={(e) =>
+            setNewSetting({
+              ...newSetting,
+              interestRate: Number(e.target.value),
+            })
+          }
+        />
+      </label>
+
+      <label>
+        Макс. дълг (% от дохода)
+        <input
+          type="number"
+          step="0.01"
+          value={newSetting.maxDebtRatio}
+          onChange={(e) =>
+            setNewSetting({
+              ...newSetting,
+              maxDebtRatio: Number(e.target.value),
+            })
+          }
+        />
+        <small>напр. 0.3 = 30%</small>
+      </label>
+
+      {newSetting.creditType === 'MORTGAGE' && (
+        <label>
+          Мин. самоучастие (%)
+          <input
+            type="number"
+            step="0.01"
+            value={newSetting.minDownPaymentPct ?? ''}
+            onChange={(e) =>
+              setNewSetting({
+                ...newSetting,
+                minDownPaymentPct: e.target.value
+                  ? Number(e.target.value)
+                  : undefined,
+              })
+            }
+          />
+          <small>напр. 0.2 = 20%</small>
+        </label>
+      )}
+
+      <button type="submit">Добави</button>
+    </form>
+    <br></br>
+    <table className="table">
+      <thead>
+        <tr>
+          <th>Тип</th>
+          <th>Мин доход</th>
+          <th>Макс доход</th>
+          <th>Лихва</th>
+          <th>Дълг %</th>
+          <th>Самоучастие %</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {settings.map((s) => (
+          <tr key={s.id}>
+            <td>{creditTypeLabel(s.creditType)}</td>
+            <td>{s.minIncome}</td>
+            <td>{s.maxIncome ?? '∞'}</td>
+            <td>{s.interestRate}%</td>
+
+            <td>{(s.maxDebtRatio * 100).toFixed(0)}%</td>
+
+            <td>
+              {s.minDownPaymentPct
+                ? (s.minDownPaymentPct * 100).toFixed(0) + '%'
+                : '—'}
+            </td>
+
+            <td>
+              <button onClick={() => deleteSetting(s.id!)}>
+                Изтрий
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </section>
+)}
 
       {menu === 'profile' && (
         <section className="page">
