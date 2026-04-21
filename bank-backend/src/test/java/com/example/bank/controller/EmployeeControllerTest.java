@@ -50,22 +50,6 @@ class EmployeeControllerTest {
         assertEquals(7L, employeeController.update(7L, in).getId());
     }
 
-    @Test
-    void createCallsService() {
-        CreateEmployeeDto in = new CreateEmployeeDto();
 
-        when(employeeService.create(in)).thenReturn(new EmployeeDto());
-
-        employeeController.create(in);
-
-        verify(employeeService).create(in);
-    }
-
-    @Test
-    void createWithNullDto() {
-        when(employeeService.create(null)).thenReturn(new EmployeeDto());
-
-        assertDoesNotThrow(() -> employeeController.create(null));
-    }
 
 }

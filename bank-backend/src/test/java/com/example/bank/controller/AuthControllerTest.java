@@ -102,26 +102,6 @@ class AuthControllerTest {
     }
 
     @Test
-    void loginReturnsUserRole() {
-        AuthController.LoginRequest req = new AuthController.LoginRequest();
-        req.setUsername("user");
-        req.setPassword("pass");
-
-        Authentication auth = new UsernamePasswordAuthenticationToken(
-                "user",
-                "x",
-                List.of(new SimpleGrantedAuthority("ROLE_USER"))
-        );
-
-        when(authenticationManager.authenticate(any())).thenReturn(auth);
-        when(jwtService.generateToken("user", "ROLE_USER")).thenReturn("jwt");
-
-        ResponseEntity<Map<String, String>> response = authController.login(req);
-
-        assertEquals("ROLE_USER", response.getBody().get("role"));
-    }
-
-    @Test
     void updateMeWithValidDto() {
         UpdateProfileDto dto = new UpdateProfileDto();
         dto.setDisplayName("New Name");

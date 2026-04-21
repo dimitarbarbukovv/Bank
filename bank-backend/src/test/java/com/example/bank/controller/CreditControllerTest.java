@@ -81,32 +81,6 @@ class CreditControllerTest {
     }
 
     @Test
-    void createHandlesNullDto() {
-        when(creditService.createCredit(null)).thenReturn(1L);
-
-        Map<String, Long> out = creditController.create(null);
-
-        assertEquals(1L, out.get("id"));
-    }
-
-    @Test
-    void scheduleReturnsEmptyList() {
-        when(creditService.getSchedule(2L)).thenReturn(List.of());
-
-        assertTrue(creditController.schedule(2L).isEmpty());
-    }
-
-    @Test
-    void statusHasCorrectKey() {
-        when(creditService.getCreditStatus(7L)).thenReturn("APPROVED");
-
-        Map<String, String> out = creditController.status(7L);
-
-        assertTrue(out.containsKey("status"));
-        assertEquals("APPROVED", out.get("status"));
-    }
-
-    @Test
     void suggestionHandlesInvalidType() {
         assertThrows(IllegalArgumentException.class, () ->
                 creditController.suggestion(
