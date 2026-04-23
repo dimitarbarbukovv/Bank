@@ -42,6 +42,7 @@ class BankAccountControllerTest {
     void closeDelegates() {
         bankAccountController.close(8L);
         verify(bankAccountService).closeAccount(8L);
+        verifyNoMoreInteractions(bankAccountService);
     }
 
     @Test

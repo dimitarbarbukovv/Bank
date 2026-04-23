@@ -955,6 +955,7 @@ const markPaid = async (installmentId: number) => {
         Мин. доход
         <input
           type="number"
+          min="0"
           value={newSetting.minIncome}
           onChange={(e) =>
             setNewSetting({
@@ -969,13 +970,20 @@ const markPaid = async (installmentId: number) => {
         Макс. доход
         <input
           type="number"
+          min="1"
           value={newSetting.maxIncome ?? ''}
           onChange={(e) =>
             setNewSetting({
               ...newSetting,
               maxIncome: e.target.value ? Number(e.target.value) : undefined,
-            })
-          }
+               })
+           }
+        onBlur={(e) => {
+           const val = Number(e.target.value);
+               if (val <= 0) {
+                   setNewSetting({ ...newSetting, maxIncome: undefined });
+                   }
+               }}
           placeholder="без лимит"
         />
       </label>
