@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +45,30 @@ class ClientControllerTest {
         List<ClientDto> out = clientController.getAll("iva");
         assertEquals(1, out.size());
         assertEquals("Ivan", out.getFirst().getFirstName());
+    }
+
+    @Test
+    void getAllWithQueryReturnsEmptyWhenNoMatch() {
+        ClientDto a = new ClientDto();
+        a.setFirstName("Ivan");
+        ClientDto b = new ClientDto();
+        b.setFirstName("Petar");
+
+        when(clientService.getAll()).thenReturn(List.of(a, b));
+        List<ClientDto> out = clientController.getAll("zzz");
+        assertTrue(out.isEmpty());
+    }
+
+    @Test
+    void getAllWithEmptyStringReturnsAll() {
+        ClientDto a = new ClientDto();
+        a.setFirstName("Ivan");
+        ClientDto b = new ClientDto();
+        b.setFirstName("Petar");
+
+        when(clientService.getAll()).thenReturn(List.of(a, b));
+        List<ClientDto> out = clientController.getAll("");
+        assertEquals(2, out.size());
     }
 
 }
